@@ -1,0 +1,22 @@
+[Unit]
+Description=Fire Operation Timer LED Display
+Requires=timer-api.service
+After=timer-api.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/mu2ura-1/rpi-rgb-led-matrix/examples-api-use
+
+ExecStart=/home/mu2ura-1/rpi-rgb-led-matrix/examples-api-use/timer_led6 \
+ --led-rows=32 \
+ --led-cols=64 \
+ --led-chain=2 \
+ --led-slowdown-gpio=2\
+ --led-brightness=100 \
+ --led-pwm-bits=4
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
