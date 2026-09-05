@@ -1,0 +1,15 @@
+[Unit]
+Description=Fire Operation Timer API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=mu2ura-1
+WorkingDirectory=/YOUR_Folder_directory/examples-api-use
+ExecStart=/bin/bash /YOUR_Folder_directory/timer_api.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
