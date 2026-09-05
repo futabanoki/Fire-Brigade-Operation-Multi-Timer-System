@@ -1,0 +1,37 @@
+# Secrets
+.env
+.env.*
+secrets.env
+*.key
+*.pem
+credentials.json
+
+# Runtime files
+timer.json
+timer_new.json
+*.log
+
+# Compiled binaries
+timer_led
+timer_led2
+timer_led3
+timer_led4
+timer_led5
+timer_led6
+
+# Build files
+*.o
+*.out
+
+# Editor
+.vscode/
+.idea/
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+tmp/
+temp/
