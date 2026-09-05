@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+font-family:sans-serif;
+text-align:center;
+margin:10px;
+}
+
+#timer{
+  font-size:140px;
+  font-weight:bold;
+  margin:40px;
+}
+
+button{
+  font-size:48px;
+  font-weight:bold;
+  padding:40px;
+  margin:15px;
+  width:90%;
+  height:180px;
+  border-radius:25px;
+  border:none;
+}
+
+select{
+font-size:48px;
+padding:10px;
+}
+
+.lap{
+  font-size:40px;
+  font-weight:bold;
+  margin:25px;
+}
+
+table{
+  border-collapse: collapse;
+}
+
+td,
+th{
+  border: 1px solid #999;
+  text-align: center;
+  vertical-align: middle;
+}
+
+#summaryScroll{
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+#summaryTable{
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+
+#summaryTable table{
+  width: auto;
+  min-width: 100%;
+  margin-bottom: 24px;
+  table-layout: auto;
+}
+
+#summaryTable th,
+#summaryTable td{
+  font-size: 24px;
+  padding: 12px 14px;
+  white-space: nowrap;
+}
+
+#summaryTable th:first-child,
+#summaryTable td:first-child{
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 90px;
+  background: #ffffff;
+}
+
+@media screen and (max-width: 600px){
+
+  #summaryTable th,
+  #summaryTable td{
+    font-size: 20px;
+    padding: 10px 12px;
+  }
+
+  #summaryTable th:first-child,
+  #summaryTable td:first-child{
+    min-width: 78px;
+  }
+}
+
+.startBtn{
+  background:#ff4444;
+  color:white;
+}
+
+.lapBtn{
+  background:#0066ff;
+  color:white;
+}
+
+.stopBtn{
+  background:#333333;
+  color:white;
+}
+
+.saveBtn{
+  background:#009933;
+  color:white;
+}
+
+body{
+  font-family:sans-serif;
+  text-align:center;
+  margin:10px;
+  min-height:100vh;
+}
+
+#summaryTable{
+  font-size: 24px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#summaryTable th,
+#summaryTable td{
+  font-size: 24px;
+  padding: 12px 10px;
+  border: 1px solid #999;
+  text-align: center;
+  vertical-align: middle;
+}
+
+#summaryScroll{
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+#summaryTable{
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  font-size: 24px;
+}
+
+#summaryTable table{
+  width: auto;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  margin-bottom: 24px;
+}
+
+#summaryTable th,
+#summaryTable td{
+  font-size: 24px;
+  padding: 12px 14px;
+  border: 1px solid #999;
+  text-align: center;
+  vertical-align: middle;
+
+  /* チーム名やタイムを途中で改行させない */
+  white-space: nowrap;
+}
+
+#summaryTable th:first-child,
+#summaryTable td:first-child{
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+  min-width: 90px;
+}
+
+@media screen and (max-width: 600px){
+
+  #summaryTable{
+    font-size: 20px;
+  }
+
+  #summaryTable th,
+  #summaryTable td{
+    font-size: 20px;
+    padding: 10px 12px;
+  }
+
+  #summaryTable th:first-child,
+  #summaryTable td:first-child{
+    min-width: 78px;
+  }
+
+  h3{
+    font-size: 26px;
+  }
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2 id="title"></h2>
+
+<select id="team"></select>
+
+<div id="timer">0.00</div>
+
+<button
+  id="masterBtn"
+  class="startBtn"
+  onclick="masterStart()"
+  style="display:none">
+  START
+</button>
+
+<button
+  id="lapBtn"
+  class="lapBtn"
+  onclick="lap()">
+  LAP
+</button>
+
+<div id="lapArea"></div>
+
+<br>
+
+<button
+  id="stopBtn"
+  class="stopBtn"
+  onclick="resetDisplay()">
+  表示リセット
+</button>
+
+<hr>
+
+<h3>集計結果</h3>
+
+<div id="summaryScroll">
+  <div id="summaryTable"></div>
+</div>
+
+<script>
+
+const role = "<?= role ?>";
+
+let roleName = "";
+let lapNames = [];
+
+if(role==="commander"){
+  roleName="指揮者";
+  lapNames=[
+    "① 筒先とホースを持って伝令停止線を越える時",
+    "② 放水姿勢になった時（構えた時）",
+    "③ 指揮者の『放水はじめ！』の発声時",
+    "④ 筒先から水が出た時",
+    "⑤ 火点が倒れた時"
+  ];
+}
+
+if(role==="no1"){
+  roleName="一番員";
+  lapNames=[
+    "①2本目のホースを持ちあげ右足を踏み出した時",
+    "②オス金具を持ち左引きつけた時",
+    "③指揮者の所へ行き、結合を終えた時",
+    "④戻り、停止線を越え直立",
+    "⑤筒先から水が出た時",
+    "⑥火点が倒れた時"
+  ];
+}
+
+if(role==="no2"){
+  roleName="二番員";
+  lapNames=[
+    "①ポンプに給水管を結合『ヨシ!』",
+    "② 給水管が水槽にドボン『ヨシ!』",
+    "③ 3番員の『放水はじめ!』",
+    "⑤筒先から水が出た時",
+    "⑥火点が倒れた時"
+  ];
+}
+
+if(role==="no3"){
+  roleName="三番員";
+  lapNames=[
+    "①ポンプに給水管を結合『ヨシ!』",
+    "② 給水管が水槽にドボン『ヨシ!』",
+    "③ 3番員の『放水はじめ!』",
+    "⑤筒先から水が出た時",
+    "⑥火点が倒れた時"
+  ];
+}
+
+
+document
+.getElementById("title")
+.innerHTML =
+roleName + " 計測画面";
+
+if(role==="commander"){
+  document.body.style.backgroundColor =
+    "#ffff99";
+}
+
+if(role==="no1"){
+  document.body.style.backgroundColor =
+    "#ccffcc";
+}
+
+if(role==="no2"){
+  document.body.style.backgroundColor =
+    "#ffffff";
+}
+
+if(role==="no3"){
+  document.body.style.backgroundColor =
+    "#ffd6e7";
+}
+
+let startTime = 0;
+let elapsed = 0;
+let interval;
+let laps = [];
+let alreadySaved = false;
+let stopProcessed = false; 
+let raceStarted = false;
+let checking = false;
+let stopping = false;
+let startPending = false;
+
+function resetDisplay(){
+
+  console.log("表示リセット");
+
+  clearInterval(interval);
+
+  startTime = 0;
+  elapsed = 0;
+
+  raceStarted = false;
+  stopProcessed = false;
+  alreadySaved = false;
+
+  laps = [];
+
+  document
+    .getElementById("timer")
+    .innerHTML = "待機中";
+
+  document
+    .getElementById("lapArea")
+    .innerHTML = "";
+
+  updateLapButton();
+
+}
+
+function masterStart(){
+
+  const exactStartTime = Date.now();
+
+  console.log(
+    "★★ STARTボタン押下 = " +
+    exactStartTime
+  );
+
+  // START処理中
+  startPending = true;
+
+  stopping = false;
+
+  resetScreen();
+
+  alreadySaved = false;
+  stopProcessed = false;
+  raceStarted = false;
+
+  google.script.run
+    .withSuccessHandler(function(start){
+
+      console.log(
+        "START設定完了：" +
+        start
+      );
+
+      // START設定成功
+      startPending = false;
+
+    })
+    .withFailureHandler(function(err){
+
+      startPending = false;
+
+      console.log(
+        "START設定失敗：" +
+        err.message
+      );
+
+    })
+    .reserveStart(exactStartTime);
+}
+
+setInterval(checkStart,1000);
+
+function checkStart(){
+
+  if(stopping){
+    return;
+  }
+
+  if(checking){
+    return;
+  }
+
+  checking = true;
+
+  google.script.run
+    .withSuccessHandler(function(serverTime){
+
+      checking = false;
+
+      // ★重要
+      // STOP処理開始後に返ってきた古い応答を捨てる
+      if(stopping){
+        console.log("STOP処理中なので古いSTART応答を無視");
+        return;
+      }
+
+      const now = Date.now();
+
+      console.log(
+        "serverTime = " + serverTime
+      );
+
+      console.log(
+        "now = " + now
+      );
+
+      // 以下は現在の処理
+
+      if(serverTime === -1){
+
+        // START操作直後に返ってきた
+        // 古いSTOP情報(-1)は無視する
+        if(startPending){
+
+          console.log(
+            "START処理中の古い -1 を無視"
+          );
+
+          return;
+        }
+
+        if(stopProcessed){
+          return;
+        }
+
+        stopProcessed = true;
+
+        // 時計停止
+        clearInterval(interval);
+
+        raceStarted = false;
+
+        // ==============================
+        // 1～3番員だけ保存
+        // ==============================
+
+        if(role !== "commander"){
+
+          console.log(
+            "STOP受信 → autoSave"
+          );
+
+          // ★ startTime、elapsed、lapsを
+          // 消す前に保存する
+          autoSave();
+        }
+
+        // ★ここでは laps=[] にしない
+        // ★elapsed=0 にもしない
+        // ★startTime=0 にもしない
+
+        document
+          .getElementById("timer")
+          .innerHTML =
+          "待機中";
+
+        return;
+      }
+
+      if(serverTime === 0){
+        console.log("まだ開始予約なし");
+        return;
+      }
+
+      if(raceStarted){
+        console.log("既に開始済み");
+        return;
+      }
+
+      if(now >= serverTime){
+
+        if(raceStarted){
+         return;
+        }
+
+        if(raceStarted){
+          return;
+        }
+
+       console.log("タイマー開始");
+
+        stopProcessed = false;
+        alreadySaved = false;
+        raceStarted = true;
+
+        startTime = serverTime;
+        elapsed = 0;
+
+        laps = [];
+
+        document
+        .getElementById("lapArea")
+        .innerHTML = "";
+
+        updateLapButton();
+
+        clearInterval(interval);
+
+        interval =
+        setInterval(updateTimer,10);
+      }
+
+    })
+    .withFailureHandler(function(err){
+
+      checking = false;
+
+      console.log(
+        "GAS Error : " +
+        err.message
+      );
+
+    })
+    .getStartTime();
+}
+
+function updateTimer(){
+
+  if(startTime === 0){
+    return;
+  }
+
+  elapsed =
+    Date.now() - startTime;
+
+  document
+    .getElementById("timer")
+    .innerHTML =
+    (elapsed/1000).toFixed(1);
+}
+
+function lap(){
+
+  if(!raceStarted){
+    return;
+  }
+
+  if(navigator.vibrate){
+    navigator.vibrate(100);
+  }
+
+  if(laps.length >= lapNames.length){
+    return;
+  }
+
+
+  // =====================================
+  // LAPボタンを押した瞬間の時刻
+  // =====================================
+
+  const tapTime =
+    Date.now();
+
+  const lapElapsed =
+    tapTime - startTime;
+
+  // 現在タイムも押した瞬間に合わせる
+  elapsed =
+    lapElapsed;
+
+  const value =
+    (lapElapsed / 1000)
+      .toFixed(1);
+
+
+  console.log(
+    "LAP押下 role=" +
+    role +
+    " lap=" +
+    (laps.length + 1) +
+    " time=" +
+    value
+  );
+
+
+  laps.push(value);
+
+
+  // =====================================
+  // LAP一覧表示
+  // =====================================
+
+  let html = "";
+
+  for(let i = 0; i < laps.length; i++){
+
+    html +=
+      "<div class='lap'>" +
+      lapNames[i] +
+      " : " +
+      laps[i] +
+      " 秒</div>";
+
+  }
+
+  document
+    .getElementById("lapArea")
+    .innerHTML = html;
+
+
+  updateLapButton();
+
+
+  // =====================================
+  // 指揮者の最終LAP
+  // =====================================
+
+  if(laps.length === lapNames.length){
+
+    console.log(
+      "最終LAP → 自動STOP"
+    );
+
+    if(role === "commander"){
+
+      stopping = true;
+
+      clearInterval(interval);
+
+      raceStarted = false;
+
+
+      // =================================
+      // 指揮者自身を保存
+      // =================================
+
+      autoSave();
+
+
+      // =================================
+      // LAPボタンを押した瞬間を
+      // 正確なSTOP時刻として送信
+      // =================================
+
+      const exactStopTime =
+        tapTime;
+
+      console.log(
+        "正確なSTOP時刻=" +
+        exactStopTime
+      );
+
+
+      google.script.run
+        .withSuccessHandler(function(){
+
+          console.log(
+            "stopAll成功"
+          );
+
+        })
+        .withFailureHandler(function(err){
+
+          console.log(
+            "stopAll失敗：" +
+            err.message
+          );
+
+        })
+        .stopAll(exactStopTime);
+    }
+  }
+}
+
+function save(){
+
+  const obj = {
+
+    team:
+      document
+      .getElementById(
+        "team"
+      ).value,
+
+    role:role,
+
+    total:
+      (elapsed/1000)
+      .toFixed(1),
+
+    lap1:laps[0] || "",
+    lap2:laps[1] || "",
+    lap3:laps[2] || "",
+    lap4:laps[3] || "",
+    lap5:laps[4] || "",
+    lap6:laps[5] || ""
+
+  };
+
+  google.script.run
+  .withSuccessHandler(function(){
+
+    alert("保存完了");
+
+    resetScreen(); 
+
+    loadSummary();
+
+  })
+  .saveResult(obj);
+
+}
+
+function showSummary(data){
+
+  const teams = Object.keys(data);
+
+  const roleList = [
+
+    {
+      key: "commander",
+      title: "指揮者",
+      labels: [
+        "① 伝令停止線を越える",
+        "② 放水姿勢",
+        "③ 放水はじめ",
+        "④ 筒先から水",
+        "⑤ 火点倒壊"
+      ]
+    },
+
+    {
+      key: "no1",
+      title: "一番員",
+      labels: [
+        "① 2本目ホース・右足",
+        "② オス金具を左へ引く",
+        "③ 指揮者との結合完了",
+        "④ 戻り停止線・直立",
+        "⑤ 筒先から水",
+        "⑥ 火点倒壊"
+      ]
+    },
+
+    {
+      key: "no2",
+      title: "二番員",
+      labels: [
+        "① 給水管結合・ヨシ",
+        "② 水槽投入・ヨシ",
+        "③ 放水はじめ",
+        "④ 筒先から水",
+        "⑤ 火点倒壊"
+      ]
+    },
+
+    {
+      key: "no3",
+      title: "三番員",
+      labels: [
+        "① 給水管結合・ヨシ",
+        "② 水槽投入・ヨシ",
+        "③ 放水はじめ",
+        "④ 筒先から水",
+        "⑤ 火点倒壊"
+      ]
+    }
+
+  ];
+
+  let html = "";
+
+  roleList.forEach(function(role){
+
+    html += "<h3>" + role.title + "</h3>";
+
+    html += "<table>";
+
+    // ==========================
+    // 表の見出し
+    // ==========================
+
+    html += "<tr>";
+    html += "<th>項目</th>";
+
+    teams.forEach(function(team){
+
+      html +=
+        "<th>" +
+        team +
+        "</th>";
+
+    });
+
+    html += "</tr>";
+
+
+    // ==========================
+    // LAP行
+    // ==========================
+
+    for(let lap = 1; lap <= role.labels.length; lap++){
+
+      html += "<tr>";
+
+      // 左端：LAP項目名
+      html +=
+        "<td>" +
+        role.labels[lap - 1] +
+        "</td>";
+
+
+      // ========================
+      // このLAPの全チーム値を収集
+      // ========================
+
+      const values = [];
+
+      teams.forEach(function(team){
+
+        if(
+          data[team] &&
+          data[team][role.key]
+        ){
+
+          const value =
+            data[team][role.key]["lap" + lap];
+
+          if(
+            value !== "" &&
+            value !== null &&
+            value !== undefined
+          ){
+
+            const num = Number(value);
+
+            if(!isNaN(num)){
+              values.push(num);
+            }
+
+          }
+
+        }
+
+      });
+
+
+      // ========================
+      // 順位計算
+      // ========================
+
+      const sorted =
+        values
+          .slice()
+          .sort(function(a,b){
+            return a - b;
+          });
+
+
+      const fastest =
+        sorted.length >= 1
+        ? sorted[0]
+        : null;
+
+
+      const second =
+        sorted.length >= 2
+        ? sorted[1]
+        : null;
+
+
+      const slowest =
+        sorted.length >= 2
+        ? sorted[sorted.length - 1]
+        : null;
+
+
+      // ========================
+      // 各チームのセル
+      // ========================
+
+      teams.forEach(function(team){
+
+        let value = "";
+
+        if(
+          data[team] &&
+          data[team][role.key]
+        ){
+
+          value =
+            data[team][role.key]["lap" + lap] || "";
+
+        }
+
+
+        let color = "";
+
+        if(value !== ""){
+
+          const num =
+            Number(value);
+
+
+          if(
+            fastest !== null &&
+            num === fastest
+          ){
+
+            // 最速
+            color = "#ccffcc";
+
+          }
+          else if(
+            second !== null &&
+            num === second
+          ){
+
+            // 2位
+            color = "#ffff99";
+
+          }
+          else if(
+            slowest !== null &&
+            num === slowest
+          ){
+
+            // 最遅
+            color = "#ffd0d0";
+
+          }
+
+        }
+
+
+        html +=
+          "<td style='background:" +
+          color +
+          "'>" +
+          value +
+          "</td>";
+
+      });
+
+
+      html += "</tr>";
+
+    }
+
+
+    html += "</table><br>";
+
+  });
+
+
+  document
+    .getElementById("summaryTable")
+    .innerHTML = html;
+
+}
+
+function loadTeams(){
+
+  google.script.run
+  .withSuccessHandler(function(data){
+
+    let html="";
+
+    data.forEach(r=>{
+
+      html +=
+      "<option>"
+      + r[1]
+      + "</option>";
+
+    });
+
+    document
+      .getElementById(
+        "team"
+      ).innerHTML = html;
+
+  })
+  .getCompetitors();
+
+}
+
+function loadSummary(){
+
+  google.script.run
+  .withSuccessHandler(
+    showSummary
+  )
+  .getSummary();
+
+}
+
+// ========================================
+// 初期読み込み
+// ========================================
+
+loadTeams();
+loadSummary();
+
+
+// 5秒ごとに集計表更新
+setInterval(
+  loadSummary,
+  5000
+);
+
+
+// ========================================
+// 画面リセット
+// ========================================
+
+function resetScreen(){
+
+  console.log("★★ resetScreen実行 ★★");
+
+  clearInterval(interval);
+
+  startTime = 0;
+  elapsed = 0;
+  laps = [];
+
+  raceStarted = false;
+
+  document
+    .getElementById("timer")
+    .innerHTML = "待機中";
+
+  document
+    .getElementById("lapArea")
+    .innerHTML = "";
+
+  updateLapButton();
+}
+
+
+// ========================================
+// LAPボタン表示更新
+// ========================================
+
+function updateLapButton(){
+
+  const btn =
+    document.getElementById("lapBtn");
+
+  if(!btn){
+    return;
+  }
+
+  if(laps.length < lapNames.length){
+
+    btn.innerHTML =
+      lapNames[laps.length];
+
+    btn.disabled = false;
+
+    btn.style.display =
+      "inline-block";
+
+  }else{
+
+    btn.disabled = true;
+
+    btn.style.display =
+      "none";
+  }
+}
+
+
+// ========================================
+// 指揮者だけSTART表示
+// ========================================
+
+window.onload = function(){
+
+  const startBtn =
+    document.getElementById("masterBtn");
+
+  if(role === "commander"){
+
+    startBtn.style.display =
+      "inline-block";
+
+  }else{
+
+    startBtn.style.display =
+      "none";
+  }
+
+  updateLapButton();
+};
+
+
+// ========================================
+// 自動保存
+// ========================================
+
+function autoSave(){
+
+  if(alreadySaved){
+
+    console.log(
+      "autoSave中止：既に保存済み"
+    );
+
+    return;
+  }
+
+  alreadySaved = true;
+
+  const obj = {
+
+    team:
+      document
+        .getElementById("team")
+        .value,
+
+    role: role,
+
+    total:
+      (elapsed / 1000)
+        .toFixed(1),
+
+    lap1: laps[0] || "",
+    lap2: laps[1] || "",
+    lap3: laps[2] || "",
+    lap4: laps[3] || "",
+    lap5: laps[4] || "",
+    lap6: laps[5] || ""
+
+  };
+
+
+  console.log("保存内容");
+  console.log("role =", role);
+  console.log("total =", obj.total);
+  console.log("lap1 =", obj.lap1);
+  console.log("lap2 =", obj.lap2);
+  console.log("lap3 =", obj.lap3);
+  console.log("lap4 =", obj.lap4);
+  console.log("lap5 =", obj.lap5);
+  console.log("lap6 =", obj.lap6);
+
+
+  google.script.run
+    .withSuccessHandler(function(){
+
+      console.log(
+        "saveResult 保存成功"
+      );
+
+      loadSummary();
+
+    })
+    .withFailureHandler(function(err){
+
+      console.log(
+        "saveResult 保存失敗：" +
+        err.message
+      );
+
+      alreadySaved = false;
+
+    })
+    .saveResult(obj);
+}
+
+</script>
+
+</body>
+</html>
